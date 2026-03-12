@@ -200,6 +200,89 @@ func (c *ChallengeController) GetActiveOpenChallenges(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, model.GenericResponse{Success: true, Status: http.StatusOK, Payload: resp})
 }
 
+func (c *ChallengeController) GetChallengeByID(ctx *gin.Context) {
+	challengeID := ctx.Param("challengeId")
+	if challengeID == "" {
+		ctx.JSON(http.StatusBadRequest, model.GenericResponse{
+			Success: false,
+			Status:  http.StatusBadRequest,
+			Error: &model.ErrorInfo{
+				ErrorType: customerrors.ERR_INVALID_REQUEST,
+				Code:      http.StatusBadRequest,
+				Message:   "missing challengeId",
+			},
+		})
+		return
+	}
+
+	userID, ok := middleware.GetEntityID(ctx)
+	if !ok || userID == "" {
+		ctx.JSON(http.StatusUnauthorized, model.GenericResponse{
+			Success: false,
+			Status:  http.StatusUnauthorized,
+			Error: &model.ErrorInfo{
+				ErrorType: customerrors.ERR_UNAUTHORIZED,
+				Code:      http.StatusUnauthorized,
+				Message:   "unauthorized request",
+			},
+		})
+		return
+	}
+
+	resp, err := c.challengeClient.GetFullChallengeData(ctx.Request.Context(), &challengePB.GetFullChallengeDataRequest{
+		ChallengeId: challengeID,
+	})
+	if err != nil {
+		grpcStatus, _ := status.FromError(err)
+		ctx.JSON(http.StatusNotFound, model.GenericResponse{
+			Success: false,
+			Status:  http.StatusNotFound,
+			Error: &model.ErrorInfo{
+				ErrorType: "grpc_error",
+				Code:      http.StatusNotFound,
+				Message:   "failed to fetch challenge",
+				Details:   grpcStatus.Message(),
+			},
+		})
+		return
+	}
+
+	challenge := resp.GetChallenge()
+	if challenge == nil {
+		ctx.JSON(http.StatusNotFound, model.GenericResponse{
+			Success: false,
+			Status:  http.StatusNotFound,
+			Error: &model.ErrorInfo{
+				ErrorType: customerrors.ERR_NOT_FOUND,
+				Code:      http.StatusNotFound,
+				Message:   "challenge not found",
+			},
+		})
+		return
+	}
+
+	if challenge.GetCreatorId() != userID {
+		if _, exists := challenge.GetParticipants()[userID]; !exists {
+			ctx.JSON(http.StatusForbidden, model.GenericResponse{
+				Success: false,
+				Status:  http.StatusForbidden,
+				Error: &model.ErrorInfo{
+					ErrorType: customerrors.ERR_UNAUTHORIZED,
+					Code:      http.StatusForbidden,
+					Message:   "not authorized to view this challenge",
+				},
+			})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, model.GenericResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Payload: resp,
+	})
+}
+
 func (c *ChallengeController) AbandonChallenge(ctx *gin.Context) {
 	var req struct {
 		CreatorId   string `json:"creatorId"`

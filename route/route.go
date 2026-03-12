@@ -307,6 +307,8 @@ func SetUpChallengeRoutes(apiV1 *gin.RouterGroup, challengeController *controlle
 
 		//GetOwnersActiveChallenges
 		challengesPrivate.GET("/owner/open", challengeController.GetOwnersActiveChallenges)
+		// GET /api/v1/challenges/:challengeId
+		challengesPrivate.GET("/:challengeId", challengeController.GetChallengeByID)
 	}
 
 	// GET /api/v1/challenges/public/open?page=1&page_size=10&is_private=false
