@@ -39,6 +39,7 @@ func InitClients(config *config.Config) (*ClientConnections, error) {
 			time.Sleep(3 * time.Second)
 			continue
 		}
+		connProblem.Connect()
 
 		log.Println("Connecting to UserGRPC:", targetUser)
 		connUser, err := grpc.NewClient(targetUser,
@@ -54,6 +55,7 @@ func InitClients(config *config.Config) (*ClientConnections, error) {
 			time.Sleep(3 * time.Second)
 			continue
 		}
+		connUser.Connect()
 
 		if !waitForConnection(connProblem, 5*time.Second) || !waitForConnection(connUser, 5*time.Second) {
 			connProblem.Close()
