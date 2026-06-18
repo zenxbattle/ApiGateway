@@ -1,14 +1,17 @@
-# STAGE 1 — Build
 FROM golang:1.24.1-alpine AS builder
 
 WORKDIR /app
+
+RUN apk add --no-cache git
+RUN --mount=type=secret,id=GIT_AUTH_TOKEN \
+    git config --global url."https://oauth2:$(cat /run/secrets/GIT_AUTH_TOKEN)@github.com/".insteadOf "https://github.com/"
+
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o main ./cmd
+RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags="-s -w" -o /app/main ./cmd
 
-# STAGE 2 — Run
 FROM alpine:3.20
 
 WORKDIR /app

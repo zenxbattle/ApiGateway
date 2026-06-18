@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	AuthUserAdminService "github.com/lijuuu/GlobalProtoXcode/AuthUserAdminService"
 
-	ChallengeService "github.com/lijuuu/GlobalProtoXcode/ChallengeService"
 	ProblemsService "github.com/lijuuu/GlobalProtoXcode/ProblemsService"
 	"go.uber.org/zap"
 )
@@ -19,15 +18,16 @@ import (
 func SetupRoutes(Router *gin.Engine, Clients *clients.ClientConnections, JWTSecret string, log *zap.Logger) {
 
 	//Setup Client Instances
-	NatsClient := natsclient.NewNatsClient(configs.LoadConfig().NATSURL, log)
+	nc, err := natsclient.NewClient(configs.LoadConfig().NatsURL)
+	if err != nil {
+		log.Fatal("Failed to connect to NATS", zap.Error(err))
+	}
 	ProblemClient := ProblemsService.NewProblemsServiceClient(Clients.ConnProblem)
 	UserClient := AuthUserAdminService.NewAuthUserAdminServiceClient(Clients.ConnUser)
-	ChallengeClient := ChallengeService.NewChallengeServiceClient(Clients.ConnChallenge)
 
 	UserController := controller.NewUserController(UserClient, ProblemClient)
-	CompilerController := controller.NewCompilerController(NatsClient)
+	CompilerController := controller.NewCompilerController(nc)
 	ProblemController := controller.NewProblemController(ProblemClient, UserClient)
-	ChallengeController := controller.NewChallengeController(ChallengeClient, ProblemClient)
 
 	ApiV1 := Router.Group("/api/v1")
 
@@ -39,7 +39,6 @@ func SetupRoutes(Router *gin.Engine, Clients *clients.ClientConnections, JWTSecr
 	SetUpAdminRoutes(ApiV1, UserController, JWTSecret)
 	SetUpCompilerRoutes(ApiV1, CompilerController)
 	SetUpProblemRoutes(ApiV1, ProblemController, JWTSecret, UserController)
-	SetUpChallengeRoutes(ApiV1, ChallengeController, UserController, JWTSecret)
 }
 
 func SetUpTestRoutes(r *gin.Engine) {
@@ -285,32 +284,4 @@ func SetUpProblemRoutes(ApiV1 *gin.RouterGroup, ProblemController *controller.Pr
 
 }
 
-// TODO: migrate to challenge service
-func SetUpChallengeRoutes(apiV1 *gin.RouterGroup, challengeController *controller.ChallengeController, userController *controller.UserController, jwtSecret string) {
-	// route group for /api/v1/challenges
-	challenges := apiV1.Group("/challenges")
 
-	// protected routes
-	challengesPrivate := challenges.Group("")
-	challengesPrivate.Use(
-		middleware.JWTAuthMiddleware(jwtSecret),
-		middleware.RoleAuthMiddleware(middleware.RoleUser, middleware.RoleAdmin),
-		middleware.UserBanCheckMiddleware(userController.GetUserClient()),
-	)
-	{
-		// POST /api/v1/challenges/
-		challengesPrivate.POST("", challengeController.CreateChallenge)
-		// POST /api/v1/challenges/abandon
-		challengesPrivate.POST("/abandon", challengeController.AbandonChallenge)
-		// GET /api/v1/challenges/history
-		challengesPrivate.GET("/history", challengeController.GetChallengeHistory)
-
-		//GetOwnersActiveChallenges
-		challengesPrivate.GET("/owner/open", challengeController.GetOwnersActiveChallenges)
-		// GET /api/v1/challenges/:challengeId
-		challengesPrivate.GET("/:challengeId", challengeController.GetChallengeByID)
-	}
-
-	// GET /api/v1/challenges/public/open?page=1&page_size=10&is_private=false
-	challenges.GET("/public/open", challengeController.GetActiveOpenChallenges) //page page_size
-}

@@ -12,12 +12,11 @@ type Config struct {
 	// Environment
 	Environment            string
 	JWTSecretKey           string
-	BetterStackSourceToken string
-	BetterStackUploadURL   string
+	LokiURL string
 
 	// Microservices
 	APIGATEWAYPORT     string
-	NATSURL            string
+	NatsURL           string
 	GoogleClientID     string
 	GoogleClientSecret string
 	GoogleRedirectURL  string
@@ -27,7 +26,7 @@ type Config struct {
 	UserGRPCURL      string
 	CompilerGRPCURL  string
 	ProblemGRPCURL   string
-	ChallengeGRPCURL string
+
 }
 
 // LoadConfig loads configuration from environment variables with defaults
@@ -44,16 +43,14 @@ func LoadConfig() Config {
 		GoogleClientSecret: getEnv("GOOGLECLIENTSECRET", ""),
 		GoogleRedirectURL:  getEnv("GOOGLEREDIRECTURL", ""),
 
-		BetterStackSourceToken: getEnv("BETTERSTACKSOURCETOKEN", ""),
-		BetterStackUploadURL:   getEnv("BETTERSTACKUPLOADURL", ""),
+		LokiURL: getEnv("LOKIURL", "http://localhost:3100"),
 		FrontendURL:            getEnv("FRONTENDURL", "http://localhost:8080"),
 
 		APIGATEWAYPORT:     getEnv("APIGATEWAYPORT", "7000"),
-		NATSURL:            getEnv("NATSURL", "nats://localhost:4222"),
-		UserGRPCURL:    getEnv("USERGRPCURL", "localhost:50051"),
-		ProblemGRPCURL: getEnv("PROBLEMGRPCURL", "localhost:50055"),
-		//in-progress
-		ChallengeGRPCURL: getEnv("CHALLENGEGRPCURL", "localhost:50057"),
+		NatsURL:           getEnv("NATSURL", "nats://localhost:4222"),
+		UserGRPCURL:        getEnv("USERGRPCURL", "localhost:50051"),
+		ProblemGRPCURL:     getEnv("PROBLEMGRPCURL", "localhost:50055"),
+
 	}
 }
 
