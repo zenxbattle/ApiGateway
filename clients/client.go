@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 	config "xcode/configs"
@@ -10,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 )
 
 type ClientConnections struct {
@@ -22,42 +22,53 @@ type ClientConnections struct {
 //way2: dedicated lb server using nginx etc that can implement much more than just being an LB - (ratelimiting)
 
 func InitClients(config *config.Config) (*ClientConnections, error) {
-	// Connect to Problem gRPC service
 	targetProblem := config.ProblemGRPCURL
-	log.Println("Target ProblemGRPC URL ", targetProblem)
-	connProblem, err := grpc.Dial(targetProblem, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		// connUser.Close() // Clean up previous connection
-		return nil, fmt.Errorf("failed to connect to Problem gRPC server: %v", err)
-	}
-
-	// Check connection state
-	if !waitForConnection(connProblem, 5*time.Second) {
-		// connUser.Close()
-		connProblem.Close()
-		return nil, fmt.Errorf("problem gRPC connection is not ready")
-	}
-	fmt.Println("Successfully connected to ProblemService at:", targetProblem)
-
-	// Connect to User gRPC service
 	targetUser := config.UserGRPCURL
-	log.Println("Target UserGRPC URL ", targetUser)
-	connUser, err := grpc.Dial(targetUser, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to User gRPC server: %v", err)
-	}
 
-	// Check connection state
-	if !waitForConnection(connUser, 5*time.Second) {
-		connUser.Close()
-		return nil, fmt.Errorf("user gRPC connection is not ready")
-	}
-	fmt.Println("Successfully connected to UserService at:", targetUser)
+	for {
+		log.Println("Connecting to ProblemGRPC:", targetProblem)
+		connProblem, err := grpc.NewClient(targetProblem,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithKeepaliveParams(keepalive.ClientParameters{
+				Time:    10 * time.Second,
+				Timeout: 3 * time.Second,
+			}),
+		)
+		if err != nil {
+			log.Printf("Failed to create Problem gRPC client: %v, retrying...", err)
+			time.Sleep(3 * time.Second)
+			continue
+		}
 
-	return &ClientConnections{
-		ConnUser:    connUser,
-		ConnProblem: connProblem,
-	}, nil
+		log.Println("Connecting to UserGRPC:", targetUser)
+		connUser, err := grpc.NewClient(targetUser,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithKeepaliveParams(keepalive.ClientParameters{
+				Time:    10 * time.Second,
+				Timeout: 3 * time.Second,
+			}),
+		)
+		if err != nil {
+			connProblem.Close()
+			log.Printf("Failed to create User gRPC client: %v, retrying...", err)
+			time.Sleep(3 * time.Second)
+			continue
+		}
+
+		if !waitForConnection(connProblem, 5*time.Second) || !waitForConnection(connUser, 5*time.Second) {
+			connProblem.Close()
+			connUser.Close()
+			log.Println("gRPC connections not ready, retrying...")
+			time.Sleep(3 * time.Second)
+			continue
+		}
+
+		log.Println("All gRPC connections established")
+		return &ClientConnections{
+			ConnUser:    connUser,
+			ConnProblem: connProblem,
+		}, nil
+	}
 }
 
 // waitForConnection checks if the gRPC connection reaches the READY state within the timeout
