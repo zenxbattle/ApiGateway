@@ -13,9 +13,8 @@ import (
 )
 
 type ClientConnections struct {
-	ConnUser      *grpc.ClientConn
-	ConnProblem   *grpc.ClientConn
-	ConnChallenge *grpc.ClientConn
+	ConnUser    *grpc.ClientConn
+	ConnProblem *grpc.ClientConn
 }
 
 //load balancing in grpc 
@@ -55,25 +54,9 @@ func InitClients(config *config.Config) (*ClientConnections, error) {
 	}
 	fmt.Println("Successfully connected to UserService at:", targetUser)
 
-	// Connect to User gRPC service
-	targetChallenge := config.ChallengeGRPCURL
-	log.Println("Target UserGRPC URL ", targetUser)
-	connChallenge, err := grpc.Dial(targetChallenge, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to User gRPC server: %v", err)
-	}
-
-	// Check connection state
-	if !waitForConnection(connUser, 5*time.Second) {
-		connUser.Close()
-		return nil, fmt.Errorf("User gRPC connection is not ready")
-	}
-	fmt.Println("Successfully connected to UserService at:", targetUser)
-
 	return &ClientConnections{
-		ConnUser:      connUser,
-		ConnProblem:   connProblem,
-		ConnChallenge: connChallenge,
+		ConnUser:    connUser,
+		ConnProblem: connProblem,
 	}, nil
 }
 
@@ -102,4 +85,5 @@ func (c *ClientConnections) Close() {
 	if c.ConnProblem != nil {
 		c.ConnProblem.Close()
 	}
+
 }

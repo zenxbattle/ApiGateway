@@ -4,3 +4,7 @@ gin.log
 app.log
 
 *.log
+# Local dev artifacts
+tmp/
+build-errors.log
+

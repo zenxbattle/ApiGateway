@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"xcode/clients"
 	"xcode/configs"
-	logger "xcode/logger"
 	metric "xcode/prometheus"
 	ristretto "xcode/ristretto"
 	route "xcode/route"
@@ -65,8 +64,8 @@ func setupMetrics(router *gin.Engine, requestCounter *prometheus.CounterVec, lat
 
 // setupMiddleware registers all other middleware
 func setupMiddleware(router *gin.Engine, cfg configs.Config, appLogger *zap.Logger, appCache *ristretto.Cache, limiter *rate.Limiter) {
-	//betterstack logging middleware
-	router.Use(logger.BetterStackLoggingMiddleware(cfg.BetterStackSourceToken, cfg.Environment, cfg.BetterStackUploadURL, appLogger))
+	//gin logging middleware
+	router.Use(gin.Logger())
 
 	//rate limiter
 	router.Use(rateLimiterMiddleware(limiter))

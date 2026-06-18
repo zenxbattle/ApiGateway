@@ -11,11 +11,11 @@ import (
 )
 
 type CompilerController struct {
-	NatsClient *natsclient.NatsClient
+	NatsClient *natsclient.Client
 }
 
-func NewCompilerController(natsClient *natsclient.NatsClient) *CompilerController {
-	return &CompilerController{NatsClient: natsClient}
+func NewCompilerController(nc *natsclient.Client) *CompilerController {
+	return &CompilerController{NatsClient: nc}
 }
 
 type ExecutionRequest struct {
@@ -66,7 +66,7 @@ func (s *CompilerController) CompileCodeHandler(c *gin.Context) {
 
 	// Unmarshal the response
 	var resp ExecutionResponse
-	if err := json.Unmarshal(msg.Data, &resp); err != nil {
+	if err := json.Unmarshal(msg, &resp); err != nil {
 		c.JSON(http.StatusBadRequest, ExecutionResponse{
 			Error:         err.Error(),
 			StatusMessage: "Failed to parse response",
