@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"xcode/natsclient"
@@ -31,6 +32,13 @@ type ExecutionResponse struct {
 	ExecutionTime string `json:"execution_time,omitempty"`
 }
 
+type rateLimitResponse struct {
+	Success       bool   `json:"success"`
+	Error         string `json:"error"`
+	StatusMessage string `json:"status_message"`
+	ExecutionTime string `json:"execution_time"`
+}
+
 func (s *CompilerController) CompileCodeHandler(c *gin.Context) {
 	var req ExecutionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -42,7 +50,6 @@ func (s *CompilerController) CompileCodeHandler(c *gin.Context) {
 		return
 	}
 
-	// Marshal the request to JSON
 	reqData, err := json.Marshal(req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, ExecutionResponse{
@@ -53,8 +60,17 @@ func (s *CompilerController) CompileCodeHandler(c *gin.Context) {
 		return
 	}
 
-	// Send request to NATS
-	msg, err := s.NatsClient.Request("compiler.execute.request", reqData, 15*time.Second)
+	clientIP := c.GetHeader("X-Forwarded-For")
+	if clientIP != "" {
+		clientIP = strings.TrimSpace(strings.Split(clientIP, ",")[0])
+	}
+
+	headers := map[string]string{}
+	if clientIP != "" {
+		headers["X-Client-IP"] = clientIP
+	}
+
+	msg, err := s.NatsClient.RequestMsg("compiler.execute.request", reqData, headers, 15*time.Second)
 	if err != nil {
 		c.JSON(http.StatusBadGateway, ExecutionResponse{
 			Error:         "Failed to execute code",
@@ -64,7 +80,6 @@ func (s *CompilerController) CompileCodeHandler(c *gin.Context) {
 		return
 	}
 
-	// Unmarshal the response
 	var resp ExecutionResponse
 	if err := json.Unmarshal(msg, &resp); err != nil {
 		c.JSON(http.StatusBadRequest, ExecutionResponse{
@@ -72,6 +87,13 @@ func (s *CompilerController) CompileCodeHandler(c *gin.Context) {
 			StatusMessage: "Failed to parse response",
 			Success:       false,
 		})
+		return
+	}
+
+	if resp.Error == "rate_limit_exceeded" {
+		var rl rateLimitResponse
+		json.Unmarshal(msg, &rl)
+		c.JSON(http.StatusTooManyRequests, rl)
 		return
 	}
 

@@ -25,6 +25,19 @@ func (c *Client) Request(subject string, data []byte, timeout time.Duration) ([]
 	return msg.Data, nil
 }
 
+func (c *Client) RequestMsg(subject string, data []byte, header map[string]string, timeout time.Duration) ([]byte, error) {
+	msg := nats.NewMsg(subject)
+	msg.Data = data
+	for k, v := range header {
+		msg.Header.Set(k, v)
+	}
+	resp, err := c.Conn.RequestMsg(msg, timeout)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Data, nil
+}
+
 func (c *Client) QueueSubscribe(subject, queue string, handler func([]byte) []byte) error {
 	_, err := c.Conn.QueueSubscribe(subject, queue, func(msg *nats.Msg) {
 		resp := handler(msg.Data)
