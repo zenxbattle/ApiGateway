@@ -2,16 +2,16 @@ package router
 
 import (
 	"net/http"
-	"xcode/clients"
-	"xcode/configs"
-	"xcode/controller"
-	"xcode/middleware"
-	"xcode/natsclient"
+	"zenxbattle/clients"
+	"zenxbattle/configs"
+	"zenxbattle/controller"
+	"zenxbattle/middleware"
+	"zenxbattle/natsclient"
 
 	"github.com/gin-gonic/gin"
-	AuthUserAdminService "github.com/lijuuu/GlobalProtoXcode/AuthUserAdminService"
+	AuthUserAdminService "github.com/zenxbattle/CommonProto/AuthUserAdminService"
 
-	ProblemsService "github.com/lijuuu/GlobalProtoXcode/ProblemsService"
+	ProblemsService "github.com/zenxbattle/CommonProto/ProblemsService"
 	"go.uber.org/zap"
 )
 

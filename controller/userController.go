@@ -7,17 +7,17 @@ import (
 	"regexp"
 	"strconv"
 
-	"xcode/configs"
-	"xcode/customerrors"
-	"xcode/middleware"
-	"xcode/model"
-	"xcode/utils"
+	"zenxbattle/configs"
+	"zenxbattle/customerrors"
+	"zenxbattle/middleware"
+	"zenxbattle/model"
+	"zenxbattle/utils"
 
-	cache "xcode/ristretto"
+	cache "zenxbattle/ristretto"
 
 	"github.com/gin-gonic/gin"
-	authUserAdminPB "github.com/lijuuu/GlobalProtoXcode/AuthUserAdminService"
-	problemPB "github.com/lijuuu/GlobalProtoXcode/ProblemsService"
+	authUserAdminPB "github.com/zenxbattle/CommonProto/AuthUserAdminService"
+	problemPB "github.com/zenxbattle/CommonProto/ProblemsService"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 	"time"
-	config "xcode/configs"
+	config "zenxbattle/configs"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"

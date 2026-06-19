@@ -5,14 +5,14 @@ import (
 	"strconv"
 	"time"
 
-	"xcode/customerrors"
-	"xcode/middleware"
-	"xcode/model"
+	"zenxbattle/customerrors"
+	"zenxbattle/middleware"
+	"zenxbattle/model"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	challengePB "github.com/lijuuu/GlobalProtoXcode/ChallengeService"
-	problemPB "github.com/lijuuu/GlobalProtoXcode/ProblemsService"
+	challengePB "github.com/zenxbattle/CommonProto/ChallengeService"
+	problemPB "github.com/zenxbattle/CommonProto/ProblemsService"
 
 	"google.golang.org/grpc/status"
 )

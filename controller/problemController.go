@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"sync"
 	"time"
-	"xcode/customerrors"
-	"xcode/model"
+	"zenxbattle/customerrors"
+	"zenxbattle/model"
 
 	"github.com/gin-gonic/gin"
-	authUserAdminPB "github.com/lijuuu/GlobalProtoXcode/AuthUserAdminService"
-	problemPB "github.com/lijuuu/GlobalProtoXcode/ProblemsService"
+	authUserAdminPB "github.com/zenxbattle/CommonProto/AuthUserAdminService"
+	problemPB "github.com/zenxbattle/CommonProto/ProblemsService"
 	"google.golang.org/grpc/status"
 )
 
@@ -657,7 +657,7 @@ func (c *ProblemController) GetProblemMetadataListHandler(ctx *gin.Context) {
 	}
 	req.Tags = ctx.QueryArray("tags")
 	req.Difficulty = ctx.Query("difficulty")
-	req.SearchQuery = ctx.Query("search_query")
+	req.SearchTitle = ctx.Query("search_query")
 	resp, err := c.problemClient.GetProblemMetadataList(ctx.Request.Context(), &req)
 	if err != nil {
 		grpcStatus, _ := status.FromError(err)

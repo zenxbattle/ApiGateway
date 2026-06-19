@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"xcode/model"
-	cache "xcode/ristretto"
+	"zenxbattle/model"
+	cache "zenxbattle/ristretto"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	AuthUserAdminService "github.com/lijuuu/GlobalProtoXcode/AuthUserAdminService"
+	AuthUserAdminService "github.com/zenxbattle/CommonProto/AuthUserAdminService"
 	logrus "github.com/sirupsen/logrus"
 )
 

@@ -2,11 +2,11 @@ package main
 
 import (
 	"net/http"
-	"xcode/clients"
-	"xcode/configs"
-	metric "xcode/prometheus"
-	ristretto "xcode/ristretto"
-	route "xcode/route"
+	"zenxbattle/clients"
+	"zenxbattle/configs"
+	metric "zenxbattle/prometheus"
+	ristretto "zenxbattle/ristretto"
+	route "zenxbattle/route"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
