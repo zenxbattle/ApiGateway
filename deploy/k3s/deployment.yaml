@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: xcode
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: lijuthomas/api-gateway:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 7000
+        envFrom:
+        - configMapRef:
+            name: xcode-config
+        - secretRef:
+            name: xcode-secrets
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: xcode
+spec:
+  selector:
+    app: api-gateway
+  ports:
+  - port: 7000
+    targetPort: 7000
